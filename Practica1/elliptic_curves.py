@@ -7,46 +7,6 @@ from Crypto.Util.number import getPrime, isPrime
 # Resto de puntos: (x, y, 1), con x, y elementos de Zp
 
 
-def raiz_cuadrada_modular(z, p):
-    """
-    Calcula la raíz cuadrada modular de z módulo p usando el algoritmo de Tonelli-Shanks.
-    Si p % 4 == 3, utiliza una fórmula directa.
-    """
-    if p % 4 == 3:
-        return pow(z, (p + 1) // 4, p)
-
-    q = p - 1
-    s = 0
-    while q % 2 == 0:
-        q //= 2
-        s += 1
-
-    z_n = 2
-    while pow(z_n, (p - 1) // 2, p) != p - 1:
-        z_n += 1
-
-    m = s
-    c = pow(z_n, q, p)
-    t = pow(z, q, p)
-    r = pow(z, (q + 1) // 2, p)
-
-    while t != 0 and t != 1:
-        t2i = t
-        i = 0
-        for i in range(1, m):
-            t2i = pow(t2i, 2, p)
-            if t2i == 1:
-                break
-
-        b = pow(c, 2 ** (m - i - 1), p)
-        m = i
-        c = pow(b, 2, p)
-        t = (t * c) % p
-        r = (r * b) % p
-
-    return r
-
-
 def find_a_b(p):
     """
     Encuentra y devuelve todas las parejas de coeficientes (a, b) válidas
@@ -85,9 +45,8 @@ def find_by_bits(bits):
 
 def rational_points(p, a, b):
     """
-    Calcula y devuelve todos los puntos racionales (x, y, 1) que pertenecen
-    a la curva elíptica definida por y^2 = x^3 + ax + b (mod p).
-    Incluye el punto al infinito (0, 1, 0).
+    Calcula los puntos racionales de la curva elíptica usando el método
+    tabular: generando Residuos Cuadráticos y Raíces.
     """
     points = []
 
@@ -97,17 +56,19 @@ def rational_points(p, a, b):
 
     points.append((0, 1, 0))
 
+    qr_sr = {}
+    for i in range(p):
+        cuadrado = pow(i, 2, p)
+        if cuadrado not in qr_sr:
+            qr_sr[cuadrado] = []
+        qr_sr[cuadrado].append(i)
+
     for x in range(p):
-        z = (pow(x, 3, p) + (a * x) % p + b) % p
+        r = (pow(x, 3, p) + (a * x) % p + b) % p
 
-        if z == 0:
-            points.append((x, 0, 1))
-
-        elif pow(z, (p - 1) // 2, p) == 1:
-            y = raiz_cuadrada_modular(z, p)
-
-            points.append((x, y, 1))
-            points.append((x, p - y, 1))
+        if r in qr_sr:
+            for y in qr_sr[r]:
+                points.append((x, y, 1))
 
     return points
 
