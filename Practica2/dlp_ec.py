@@ -65,6 +65,10 @@ def double_point(p, n, a):
 
 
 def fold_point(a, b, p, P, k):
+    """
+    Calcula el producto escalar kP sobre una curva elíptica utilizando
+    el algoritmo eficiente de 'Doble y Suma' (Double-and-Add).
+    """
     error = (-1, -1, -1)
 
     if ((4 * pow(a, 3, p)) + (27 * pow(b, 2, p))) % p == 0:
@@ -89,6 +93,10 @@ def fold_point(a, b, p, P, k):
 
 
 def dlp_sol(a, b, p, G, P):
+    """
+    Resuelve el Problema del Logaritmo Discreto en Curvas Elípticas (ECDLP)
+    mediante un ataque directo de Fuerza Bruta.
+    """
     if P == G:
         return 1
 
