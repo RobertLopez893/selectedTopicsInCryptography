@@ -72,7 +72,7 @@ def right_left_bin(k, P, p, a):
 
     for i in range(len(k_bin)):
         print(f"Iteración: {i}")
-        if int(k_bin[len(k_bin) - 1 - i]) == 1:  # Ajuste para leer de derecha a izquierda
+        if int(k_bin[len(k_bin) - 1 - i]) == 1:
             print("Se va a efectuar adición de puntos por 1.")
             Q = add_points(P, Q, p)
         P = double_point(P, p, a)
@@ -90,7 +90,7 @@ def left_right_bin(k, P, p, a):
     for i in range(len(k_bin)):
         print(f"Iteración: {i}")
         Q = double_point(Q, p, a)
-        if int(k_bin[i]) == 1:  # Ajuste para leer de izquierda a derecha
+        if int(k_bin[i]) == 1:
             print("Se va a efectuar adición de puntos por 1.")
             Q = add_points(P, Q, p)
         print(f"Q = {Q}")
