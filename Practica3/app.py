@@ -8,6 +8,7 @@ st.title("🔐 Práctica 3: Toy ECDH")
 st.markdown("**Alumno:** López Reyes José Roberto | **Grupo:** 7CM1")
 st.markdown("---")
 
+
 def add_points(p, q, n):
     if p == (0, 1, 0):
         return q
