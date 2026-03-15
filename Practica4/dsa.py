@@ -26,7 +26,7 @@ def find_gen(p, q):
     e = (p - 1) // q
 
     while True:
-        h = randprime(1, p)
+        h = randint(1, p - 1)
         g = pow(h, e, p)
 
         if 2 <= g <= p - 1:
