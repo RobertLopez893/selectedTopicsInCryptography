@@ -71,16 +71,76 @@ def verify_sign(p, q, g, beta, m, r, s):
         return False
 
 
+def main():
+    while True:
+        print("\n" + "=" * 40)
+        print(" LABORATORIO 04: DSA ")
+        print("=" * 40)
+        print("1. Ejecutar proceso completo (Llaves automáticas, firma y verificación)")
+        print("2. Generar mis llaves y firmar un mensaje")
+        print("3. Verificar una firma manual (Ingresar parámetros)")
+        print("4. Salir")
+
+        opcion = input("\nSelecciona una opción (1-4): ")
+
+        if opcion == '1':
+            print("\n--- PROCESO COMPLETO ---")
+            d, p, q, g, beta = gen_key_pair()
+            print(f"Private key: {d}. Public Key: ({p}, {q}, {g}, {beta}).")
+
+            m = randint(1, q - 1)
+            r, s = gen_sign(m, p, q, g, d)
+            print(f"Signature for {m}: ({r}, {s})")
+
+            validation = verify_sign(p, q, g, beta, m, r, s)
+            if validation:
+                print("-> La firma es válida.")
+            else:
+                print("-> La firma no es válida.")
+
+        elif opcion == '2':
+            print("\n--- GENERACIÓN DE LLAVES Y FIRMA ---")
+            d, p, q, g, beta = gen_key_pair()
+            print(f"Llave privada (d): {d}")
+            print(f"Llave pública (p, q, g, beta): ({p}, {q}, {g}, {beta})")
+
+            try:
+                m = int(input(f"\nIngresa el mensaje m (entero entre 1 y {q - 1}): "))
+                r, s = gen_sign(m, p, q, g, d)
+                if r is not None and s is not None:
+                    print(f"Firma generada para el mensaje {m}:")
+                    print(f"r = {r}")
+                    print(f"s = {s}")
+            except ValueError:
+                print("Error: Por favor ingresa un número entero válido.")
+
+        elif opcion == '3':
+            print("\n--- VERIFICACIÓN DE FIRMA MANUAL ---")
+            print("Por favor, ingresa los valores solicitados:")
+            try:
+                p = int(input("Ingresa p: "))
+                q = int(input("Ingresa q: "))
+                g = int(input("Ingresa g: "))
+                beta = int(input("Ingresa la clave pública beta: "))
+                m = int(input("Ingresa el mensaje (m): "))
+                r = int(input("Ingresa la firma r: "))
+                s = int(input("Ingresa la firma s: "))
+
+                print("\nIniciando verificación...")
+                validation = verify_sign(p, q, g, beta, m, r, s)
+                if validation:
+                    print("-> ¡Resultado: La firma es VÁLIDA!")
+                else:
+                    print("-> Resultado: La firma es INVÁLIDA.")
+            except ValueError:
+                print("Error: Todos los parámetros deben ser números enteros.")
+
+        elif opcion == '4':
+            print("\nSaliendo del programa... ¡Éxito en tu reporte!")
+            break
+        else:
+            print("\nOpción no válida. Por favor, intenta de nuevo.")
+
+
 if __name__ == '__main__':
-    d, p, q, g, beta = gen_key_pair()
-    print(f"Private key: {d}. Public Key: ({p}, {q}, {g}, {beta}).")
-
-    m = randint(1, q - 1)
-    r, s = gen_sign(m, p, q, g, d)
-    print(f"Signature for {m}: ({r}, {s})")
-
-    validation = verify_sign(p, q, g, beta, m, r, s)
-    if validation:
-        print("La firma es válida.")
-    else:
-        print("La firma no es válida.")
+    main()
