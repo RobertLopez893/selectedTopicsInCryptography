@@ -3,9 +3,10 @@
 
 from sympy import randprime, isprime
 from random import randint
+import csv
+
 
 # Key Generation for DSA
-
 
 def gen_primes():
     q = randprime(11, 1025)
@@ -49,7 +50,7 @@ def gen_key_pair():
 def gen_sign(m, p, q, g, d):
     if not 1 <= m <= q - 1:
         print("Error: m está fuera del rango establecido.")
-        return
+        return None, None
 
     ke = randint(1, q - 1)
     r = pow(g, ke, p) % q
@@ -71,6 +72,47 @@ def verify_sign(p, q, g, beta, m, r, s):
         return False
 
 
+# Procesamiento del CSV
+def generar_tabla_markdown(ruta_archivo):
+    print("\n| Compañero | Mensaje (m) | Firma (r, s) | ¿Es válida? |")
+    print("|---|---|---|---|")
+
+    try:
+        with open(ruta_archivo, mode='r', encoding='utf-8') as archivo:
+            lector = csv.reader(archivo)
+            next(lector, None)  # Salta el encabezado del Excel
+
+            for fila in lector:
+                # Si la fila está vacía, la saltamos
+                if len(fila) < 9:
+                    continue
+
+                nombre = fila[1]
+
+                try:
+                    p = int(fila[2])
+                    q = int(fila[3])
+                    g = int(fila[4])
+                    beta = int(fila[5])
+                    m = int(fila[6])
+                    r = int(fila[7])
+                    s = int(fila[8])
+
+                    # Verificamos la firma
+                    es_valida = verify_sign(p, q, g, beta, m, r, s)
+                    resultado = "Válida" if es_valida else "Inválida"
+
+                    # Imprimimos la fila agrupando la firma entre paréntesis
+                    print(f"| {nombre} | {m} | ({r}, {s}) | {resultado} |")
+                except ValueError:
+                    # Formato para compañeros que no entregaron sus firmas (ej. Juan Pablo)
+                    print(f"| {nombre} | N/A | N/A | Faltan datos |")
+
+    except FileNotFoundError:
+        print(
+            f"\nError: No se encontró el archivo '{ruta_archivo}'. Asegúrate de que esté en la misma carpeta que tu script de Python.")
+
+
 def main():
     while True:
         print("\n" + "=" * 40)
@@ -79,9 +121,10 @@ def main():
         print("1. Ejecutar proceso completo (Llaves automáticas, firma y verificación)")
         print("2. Generar mis llaves y firmar un mensaje")
         print("3. Verificar una firma manual (Ingresar parámetros)")
-        print("4. Salir")
+        print("4. Generar tabla Markdown desde data.csv")
+        print("5. Salir")
 
-        opcion = input("\nSelecciona una opción (1-4): ")
+        opcion = input("\nSelecciona una opción (1-5): ")
 
         if opcion == '1':
             print("\n--- PROCESO COMPLETO ---")
@@ -136,6 +179,10 @@ def main():
                 print("Error: Todos los parámetros deben ser números enteros.")
 
         elif opcion == '4':
+            print("\n--- GENERACIÓN DE TABLA DESDE CSV ---")
+            generar_tabla_markdown("data.csv")
+
+        elif opcion == '5':
             print("\nSaliendo del programa... ¡Éxito en tu reporte!")
             break
         else:
