@@ -7,7 +7,6 @@ import csv
 
 
 # Key Generation for DSA
-
 def gen_primes():
     q = randprime(11, 1025)
     k = 2
