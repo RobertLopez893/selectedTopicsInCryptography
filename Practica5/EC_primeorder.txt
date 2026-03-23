@@ -1,0 +1,47 @@
+y^2 = x^3 + 1006*x + 4 over Finite Field of size 1009
+G: (256 : 155 : 1); q= 967
+y^2 = x^3 + 1006*x + 8 over Finite Field of size 1009
+G=(436 : 973 : 1) ; q= 1069
+y^2 = x^3 + 1006*x + 23 over Finite Field of size 1009
+G=(501 : 603 : 1); q= 1051
+y^2 = x^3 + 1010*x + 1 over Finite Field of size 1013
+G=(339 : 877 : 1) q= 1051
+y^2 = x^3 + 1010*x + 9 over Finite Field of size 1013
+G=(93 : 784 : 1); q: 1031
+y^2 = x^3 + 1010*x + 36 over Finite Field of size 1013
+G=(57 : 883 : 1) q=1039
+y^2 = x^3 + 2036*x + 1 over Finite Field of size 2039
+G=(741 : 304 : 1) q=2083
+y^2 = x^3 + 2036*x + 21 over Finite Field of size 2039
+G=(1183 : 965 : 1); q=2111
+y^2 = x^3 + 2036*x + 102 over Finite Field of size 2039
+G=(2020 : 1860 : 1); q=2099
+y^2 = x^3 + 4108*x + 3 over Finite Field of size 4111
+G=(1232 : 3963 : 1); q=4177
+y^2 = x^3 + 4108*x + 5 over Finite Field of size 4111
+G=(1262 : 1718 : 1); q=4129
+y^2 = x^3 + 7024*x + 1004 over Finite Field of size 7027
+G=(2367 : 1315 : 1); q=7177
+y^2 = x^3 + 8188*x + 3 over Finite Field of size 8191
+G=(624 : 2736 : 1); q=8221
+y^2 = x^3 + 10006*x + 4 over Finite Field of size 10009
+G=(4182 : 3855 : 1); q=10039
+y^2 = x^3 + 15998*x + 11 over Finite Field of size 16001
+G=(3041 : 8982 : 1); q=15859
+y^2 = x^3 + 15998*x + 36 over Finite Field of size 16001
+G=(4971 : 2914 : 1); q=16097
+y^2 = x^3 + 60998*x + 19 over Finite Field of size 61001
+G=(42763 : 56247 : 1); q=61043
+y^2 = x^3 + 68998*x + 3 over Finite Field of size 69001
+G=(28427 : 49538 : 1); q=69491
+y^2 = x^3 + 131068*x + 1005 over Finite Field of size
+131071
+G=(20473 : 81394 : 1); q=130841
+y^2 = x^3 + 524284*x + 8 over Finite Field of size 524287
+G=(497927 : 502736 : 1); q=523867
+y^2 = x^3 + 524284*x + 504 over Finite Field of size 524287
+G=(341005 : 411111 : 1); q=523829
+y^2 = x^3 + 2305843009213693948*x + 1000 over Finite Field
+of size 2305843009213693951
+G=(797673362355646766 : 866485585223612178 : 1)
+q=2305843008114440489 
