@@ -3,6 +3,8 @@
 
 from random import randint
 import re
+import csv
+import ast
 
 
 # Functions to fold points from previous sessions
@@ -127,6 +129,112 @@ def ver_sign(p, a, b, q, G, B, m, r, s):
         return False
 
 
+# Verificate all signatures
+# Procesamiento del CSV (Igual al de DSA pero adaptado a ECDSA)
+def generar_tabla_ecdsa(ruta_archivo):
+    print("\n| Compañero | Mensaje (m) | Firma (r, s) | ¿Es válida? |")
+    print("|---|---|---|---|")
+
+    try:
+        with open(ruta_archivo, mode='r', encoding='utf-8') as archivo:
+            lector = csv.reader(archivo)
+            next(lector, None)
+
+            for fila in lector:
+                if len(fila) < 11:
+                    continue
+
+                nombre = fila[1]
+
+                try:
+                    p_val = int(fila[2])
+                    a_val = int(fila[3])
+                    b_val = int(fila[4])
+                    q_val = int(fila[5])
+
+                    # Convertimos el texto a tupla
+                    G_val = ast.literal_eval(fila[6])
+                    B_val = ast.literal_eval(fila[7])
+
+                    m_val = int(fila[8])
+                    r_val = int(fila[9])
+                    s_val = int(fila[10])
+
+                    es_valida = ver_sign(p_val, a_val, b_val, q_val, G_val, B_val, m_val, r_val, s_val)
+                    resultado = "Válida" if es_valida else "Inválida"
+
+                    print(f"| {nombre} | {m_val} | ({r_val}, {s_val}) | {resultado} |")
+
+                except (ValueError, SyntaxError, TypeError):
+                    print(f"| {nombre} | N/A | N/A | Faltan datos o formato erróneo |")
+
+    except FileNotFoundError:
+        print(f"\nError: No se encontró el archivo '{ruta_archivo}'. Asegúrate de que esté en la misma carpeta.")
+
+
+def solve_ecdlp(p, a, q, G, B):
+    # Brute force attack: Test every possible private key 'd' from 1 to q-1
+    for d_test in range(1, q):
+        # Multiply the generator point by the candidate private key
+        P_test = left_right_bin(d_test, G, p, a)
+
+        # If the resulting point matches the public key B, we found the private key
+        if P_test == B:
+            return d_test
+
+    return None
+
+
+# Hackeando el ECDSA
+def generar_tabla_hackeada(ruta_archivo):
+    print("\n| Student Name | Message (m) | Signature (r, s) | Cracked Private Key (d) |")
+    print("|---|---|---|---|")
+
+    try:
+        with open(ruta_archivo, mode='r', encoding='utf-8') as archivo:
+            lector = csv.reader(archivo)
+            next(lector, None)  # Saltar encabezado
+
+            for fila in lector:
+                if len(fila) < 11:
+                    continue
+
+                nombre = fila[1].title()
+
+                try:
+                    p = int(fila[2])
+                    a = int(fila[3])
+                    q = int(fila[5])
+
+                    G = ast.literal_eval(fila[6])
+                    B = ast.literal_eval(fila[7])
+
+                    m = int(fila[8])
+                    r = int(fila[9])
+                    s = int(fila[10])
+
+                    if p % 2 == 0:
+                        cracked_d = "Invalid Modulus (p is even)"
+                    else:
+                        cracked_d = "Not Found"
+                        for d_test in range(1, q):
+                            try:
+                                P_test = left_right_bin(d_test, G, p, a)
+                                if P_test == B:
+                                    cracked_d = str(d_test)
+                                    break
+                            except Exception:
+                                pass
+
+                    print(f"| {nombre} | {m} | ({r}, {s}) | {cracked_d} |")
+
+                except (ValueError, SyntaxError, TypeError):
+                    pass
+
+    except FileNotFoundError:
+        print(f"\nError: No se encontró el archivo '{ruta_archivo}'.")
+
+
 def main():
     filename = 'EC_primeorder.txt'
     curves = read_curves(filename)
@@ -181,6 +289,14 @@ def main():
                     print("La firma es válida.")
                 else:
                     print("La firma es inválida.")
+
+                print("--- All classmate signatures verification ---")
+
+                generar_tabla_ecdsa("data.csv")
+
+                print("--- Breaking the ECDSA ---")
+
+                generar_tabla_hackeada("data.csv")
             else:
                 print(f"Invalid selection. Please choose a number between 1 and {len(curves)}.")
 
