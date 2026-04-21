@@ -152,7 +152,6 @@ def generar_tabla_ecdsa(ruta_archivo):
                     b_val = int(fila[4])
                     q_val = int(fila[5])
 
-                    # Convertimos el texto a tupla
                     G_val = ast.literal_eval(fila[6])
                     B_val = ast.literal_eval(fila[7])
 
@@ -173,12 +172,9 @@ def generar_tabla_ecdsa(ruta_archivo):
 
 
 def solve_ecdlp(p, a, q, G, B):
-    # Brute force attack: Test every possible private key 'd' from 1 to q-1
     for d_test in range(1, q):
-        # Multiply the generator point by the candidate private key
         P_test = left_right_bin(d_test, G, p, a)
 
-        # If the resulting point matches the public key B, we found the private key
         if P_test == B:
             return d_test
 
