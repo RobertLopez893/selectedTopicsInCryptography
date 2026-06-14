@@ -101,7 +101,7 @@ def main():
         # ==========================================
         print("--- FASE 2: EXCH ---")
         priv_I = x25519.X25519PrivateKey.generate()
-        pub_I  = priv_I.public_key()
+        pub_I = priv_I.public_key()
 
         X_bytes = pub_I.public_bytes(
             encoding=serialization.Encoding.Raw,

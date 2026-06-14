@@ -112,7 +112,7 @@ def main():
             print(f"[RESPONDER] Recibió X (llave X25519 del Initiator).")
 
             priv_R = x25519.X25519PrivateKey.generate()
-            pub_R  = priv_R.public_key()
+            pub_R = priv_R.public_key()
             Y_bytes = pub_R.public_bytes(
                 encoding=serialization.Encoding.Raw,
                 format=serialization.PublicFormat.Raw
