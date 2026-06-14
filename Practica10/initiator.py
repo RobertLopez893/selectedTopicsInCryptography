@@ -8,10 +8,10 @@ from Crypto.Hash import KMAC256
 from cryptography.hazmat.primitives.asymmetric import rsa, padding, x25519
 from cryptography.hazmat.primitives import hashes, serialization
 
-# El ID del iniciador (el tuyo / de tu equipo)
+# El ID del iniciador
 ID_I = b"INI_ID"
 
-# Etiqueta de dominio para KMAC256 — debe ser idéntica en ambos lados
+# Etiqueta de dominio para KMAC256
 KMAC_CUSTOM = b"SKEME-AUTH"
 
 

@@ -8,10 +8,10 @@ from Crypto.Hash import KMAC256
 from cryptography.hazmat.primitives.asymmetric import rsa, padding, x25519
 from cryptography.hazmat.primitives import hashes, serialization
 
-# ID fijo del Responder (tu número de equipo)
+# ID fijo del Responder
 ID_R = b"RES_ID"
 
-# Etiqueta de dominio para KMAC256 — debe ser idéntica en ambos lados
+# Etiqueta de dominio para KMAC256
 KMAC_CUSTOM = b"SKEME-AUTH"
 
 
