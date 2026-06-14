@@ -2,10 +2,38 @@ import socket
 import os
 import hashlib
 import hmac
+import json
+import base64
+from Crypto.Hash import KMAC256
 from cryptography.hazmat.primitives.asymmetric import rsa, padding, x25519
 from cryptography.hazmat.primitives import hashes, serialization
 
-ID_I = b"INITIATOR_ROB_HYBRID"
+# El ID del iniciador (el tuyo / de tu equipo)
+ID_I = b"INI_ID"
+
+# Etiqueta de dominio para KMAC256 — debe ser idéntica en ambos lados
+KMAC_CUSTOM = b"SKEME-AUTH"
+
+
+def send_b64(sock, data: bytes):
+    """Codifica en Base64, añade \n y envía."""
+    sock.sendall(base64.b64encode(data) + b'\n')
+
+
+def recv_b64(sock) -> bytes:
+    """Recibe hasta \n y decodifica Base64."""
+    buf = b""
+    while not buf.endswith(b'\n'):
+        chunk = sock.recv(4096)
+        if not chunk:
+            raise ConnectionError("Conexión cerrada inesperadamente.")
+        buf += chunk
+    return base64.b64decode(buf.strip())
+
+
+def kmac256(key: bytes, data: bytes) -> bytes:
+    """Wrapper de KMAC256 con parámetros fijos del protocolo."""
+    return KMAC256.new(key=key, data=data, mac_len=32, custom=KMAC_CUSTOM).digest()
 
 
 def main():
@@ -13,22 +41,27 @@ def main():
     sk_I = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     pk_I = sk_I.public_key()
 
-    pk_I_bytes = pk_I.public_bytes(
+    pk_I_pem = pk_I.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
+    ).decode('utf-8')
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(('127.0.0.1', 65432))
-        print("[INITIATOR] Conectado al Responder mediante sockets.")
+        print("[INITIATOR] Conectado al Responder.")
 
-        # --- SETUP ---
-        s.sendall(ID_I)
-        ID_R = s.recv(1024)
-        s.sendall(pk_I_bytes)
-        pk_R_bytes = s.recv(2048)
-        pk_R = serialization.load_pem_public_key(pk_R_bytes)
-        print(f"[INITIATOR] Llave pública y ID de {ID_R.decode()} recibidos.\n")
+        # ==========================================
+        # SETUP: Intercambio de IDs y llaves RSA (JSON en Base64 + \n)
+        # ==========================================
+        payload_I = json.dumps({"id": ID_I.decode('utf-8'), "pub_key": pk_I_pem})
+        send_b64(s, payload_I.encode('utf-8'))
+        print(f"[INITIATOR] Envió JSON de setup (id + pub_key).")
+
+        raw = recv_b64(s)
+        json_R = json.loads(raw.decode('utf-8'))
+        ID_R = json_R["id"].encode('utf-8')
+        pk_R = serialization.load_pem_public_key(json_R["pub_key"].encode('utf-8'))
+        print(f"[INITIATOR] Recibió setup de '{ID_R.decode()}'. Llave RSA cargada.\n")
 
         # ==========================================
         # FASE 1: SHARE (RSA-OAEP + SHA-256)
@@ -37,69 +70,74 @@ def main():
         k_I = os.urandom(16)
         print(f"[INITIATOR] Generó k_I: {k_I.hex()}")
 
-        # Cifrado con RSA-OAEP usando SHA-256 (Requisito 1)
         c_I = pk_R.encrypt(
             ID_I + b'||' + k_I,
-            padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
         )
-        s.sendall(c_I)
+        send_b64(s, c_I)
+        print(f"[INITIATOR] Envió c_I (RSA-OAEP cifrado).")
 
-        c_R = s.recv(2048)
+        c_R = recv_b64(s)
         k_R = sk_I.decrypt(
             c_R,
-            padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
         )
         print(f"[INITIATOR] c_R descifrado. k_R obtenido: {k_R.hex()}")
 
-        # k_mac <- h(k_I | k_R) usando SHA3-256 (Transición hacia Requisito 3)
+        # k_mac <- SHA3-256(k_I || k_R)
         k_mac = hashlib.sha3_256(k_I + k_R).digest()
-        print(f"[INITIATOR] k_mac (SHA3-256) calculado: {k_mac.hex()}\n")
+        print(f"[INITIATOR] k_mac (SHA3-256): {k_mac.hex()}\n")
 
         # ==========================================
         # FASE 2: EXCH (X25519)
         # ==========================================
         print("--- FASE 2: EXCH ---")
-        # Generación de llaves X25519 (Requisito 2)
         priv_I = x25519.X25519PrivateKey.generate()
-        pub_I = priv_I.public_key()
+        pub_I  = priv_I.public_key()
 
         X_bytes = pub_I.public_bytes(
             encoding=serialization.Encoding.Raw,
             format=serialization.PublicFormat.Raw
         )
-        s.sendall(X_bytes)
-        print(f"[INITIATOR] Generó y envió llave pública X25519 (X): {X_bytes.hex()[:16]}...")
+        send_b64(s, X_bytes)
+        print(f"[INITIATOR] Envió llave pública X25519 (X): {X_bytes.hex()[:16]}...")
 
-        Y_bytes = s.recv(32)
-        pub_R = x25519.X25519PublicKey.from_public_bytes(Y_bytes)
+        Y_bytes = recv_b64(s)
+        pub_R_x25519 = x25519.X25519PublicKey.from_public_bytes(Y_bytes)
         print(f"[INITIATOR] Recibió llave pública X25519 (Y) del Responder.\n")
 
         # ==========================================
-        # FASE 3: AUTH (HMAC + SHA3-256)
+        # FASE 3: AUTH (KMAC256)
         # ==========================================
         print("--- FASE 3: AUTH ---")
-        # mac_I <- MAC_{k_mac}(Y | X | ID_I | ID_R) usando SHA3-256 (Requisito 3)
+        # mac_I <- KMAC256_{k_mac}(Y || X || ID_I || ID_R)
         msg_I = Y_bytes + X_bytes + ID_I + ID_R
-        mac_I = hmac.new(k_mac, msg_I, hashlib.sha3_256).digest()
-        s.sendall(mac_I)
-        print(f"[INITIATOR] Envió mac_I (HMAC-SHA3).")
+        mac_I = kmac256(k_mac, msg_I)
+        send_b64(s, mac_I)
+        print(f"[INITIATOR] Envió mac_I (KMAC256): {mac_I.hex()}")
 
-        mac_R = s.recv(1024)
+        mac_R = recv_b64(s)
         print(f"[INITIATOR] Recibió mac_R: {mac_R.hex()}")
 
-        # Verificar mac_R
+        # Verificar mac_R <- KMAC256_{k_mac}(X || Y || ID_R || ID_I)
         msg_R = X_bytes + Y_bytes + ID_R + ID_I
-        expected_mac_R = hmac.new(k_mac, msg_R, hashlib.sha3_256).digest()
+        expected_mac_R = kmac256(k_mac, msg_R)
 
         if hmac.compare_digest(mac_R, expected_mac_R):
             print("[INITIATOR] RESULTADO: Autenticación de mac_R EXITOSA.")
-
-            # k_sess <- h(shared_secret) usando SHA3-256
-            shared_secret = priv_I.exchange(pub_R)
+            shared_secret = priv_I.exchange(pub_R_x25519)
             k_sess = hashlib.sha3_256(shared_secret).digest()
-            print(f"[INITIATOR] RESULTADO FINAL: Llave de sesión (k_sess) establecida con SHA3-256: {k_sess.hex()}")
+            print(f"[INITIATOR] RESULTADO FINAL: k_sess (SHA3-256): {k_sess.hex()}")
         else:
-            print("[INITIATOR] RESULTADO: Falló la autenticación.")
+            print("[INITIATOR] RESULTADO: Falló la autenticación de mac_R.")
 
 
 if __name__ == "__main__":
